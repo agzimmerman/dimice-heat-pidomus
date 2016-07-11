@@ -1,14 +1,23 @@
 # dimice-heat-dealii
-# Build
-$ cd dimice-heat-dealii  
-$ mkdir build  
-$ cmake ..  
-$ make
+Compile this by running
+
+	git clone alexanderzimmerman/dimice-heat-dealii
+	mkdir build  
+	cmake ..  
+	make
+	
 # Examples
-## Run with default parameters
-$ cd dimice-heat-dealii  
-$ mkdir run  
-$ cd run  
-$ ../build/heat
-## Run with a parameter input file
-$ ../build/heat ../tests/poisson_problem_01.prm
+These examples assumes that some environment variables have been set, for example
+
+	export DIMICE_HEAT_ROOT=~/dimice-heat-dealii
+	export DIMICE_HEAT_EXE=$DIMICE_HEAT_ROOT/build/heat
+
+Run with default parameters by running
+
+	mkdir run  
+	cd run  
+	$DIMICE_HEAT_EXE
+	
+Run with a parameter input file by running, for example
+
+	$DIMICE_HEAT_EXE $DIMICE_HEAT_ROOT/tests/poisson_problem_01.prm
