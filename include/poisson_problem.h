@@ -1,5 +1,5 @@
-#ifndef _pidoums_poisson_h_
-#define _pidoums_poisson_h_
+#ifndef _pidomus_poisson_h_
+#define _pidomus_poisson_h_
 
 #include "pde_system_interface.h"
 
