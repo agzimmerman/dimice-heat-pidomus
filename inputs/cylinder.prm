@@ -21,7 +21,7 @@ subsection Domain
   set Optional double 2             = 0.25
   set Optional double 3             = 1
   set Optional int 1                = 1
-  set Output grid file name         =
+  set Output grid file name         = grid.vtk
 end
 subsection Error Tables
   set Compute error            = true
@@ -111,9 +111,9 @@ subsection Neumann boundary conditions
   set Used constants          = 
 end
 subsection Output Parameters
-  set Files to save in run directory = 
+  set Files to save in run directory =
   set Incremental run prefix         = 
-  set Output format                  = none
+  set Output format                  = vtu
   set Output partitioning            = false
   set Problem base name              = solution
   set Solution names                 = u
