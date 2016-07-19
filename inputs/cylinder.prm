@@ -4,10 +4,10 @@
 # DEAL_II_GIT_BRANCH=   
 # DEAL_II_GIT_SHORTREV= e3ff743
 subsection Dirichlet boundary conditions
-  set IDs and component masks = 0=ALL
-  set IDs and expressions     = 
+  set IDs and component masks = 0=ALL % 1=ALL
+  set IDs and expressions     = 0=cold % 1=hot
   set Known component names   = u
-  set Used constants          = 
+  set Used constants          = cold=-5.0, hot=10.0
 end
 subsection Domain
   set Colorize                      = false
@@ -21,7 +21,7 @@ subsection Domain
   set Optional double 2             = 0.25
   set Optional double 3             = 1
   set Optional int 1                = 1
-  set Output grid file name         = grid.vtk
+  set Output grid file name         =
 end
 subsection Error Tables
   set Compute error            = true
@@ -39,11 +39,6 @@ subsection Error Tables
     set List of error norms to compute = L2,H1
     set Rate key                       = 
   end
-end
-subsection Exact solution
-  set Function constants  = 
-  set Function expression = 0
-  set Variable names      = x,y,t
 end
 subsection Forcing terms
   set IDs and component masks = 
@@ -86,8 +81,8 @@ subsection IMEX Parameters
   set Use the KINSOL solver                        = true
 end
 subsection Initial solution
-  set Function constants  = 
-  set Function expression = 0
+  set Function constants  = cold=-5.0
+  set Function expression = cold
   set Variable names      = x,y,t
 end
 subsection Initial solution_dot
