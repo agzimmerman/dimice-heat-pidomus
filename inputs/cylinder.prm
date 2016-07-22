@@ -121,7 +121,6 @@ subsection Poisson problem
 end
 subsection Refinement
   set Bottom fraction                        = 0.100000
-  set Maximum number of cells (if available) = 1000
   set Order (optimize)                       = 2
   set Refinement strategy                    = fraction
   set Top fraction                           = 0.300000
@@ -139,6 +138,7 @@ subsection Zero average constraints
 end
 subsection pi-DoMUS
   set Adaptive refinement                            = true
+  set Max number of cells                            = 1000
   set Enable finer preconditioner                    = false
   set Initial global refinement                      = 1
   set Jacobian solver tolerance                      = 1e-8
@@ -146,7 +146,6 @@ subsection pi-DoMUS
   set Max iterations finer prec.                     = 0
   set Max tmp vectors                                = 30
   set Max tmp vectors for finer system               = 50
-  set Maximum number of time steps                   = 10000
   set Number of cycles                               = 1
   set Overwrite Newton's iterations                  = true
   set Print some useful informations about processes = true
