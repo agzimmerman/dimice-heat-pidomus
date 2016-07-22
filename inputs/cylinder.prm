@@ -7,7 +7,7 @@ subsection Dirichlet boundary conditions
   set IDs and component masks = 0=ALL % 1=ALL
   set IDs and expressions     = 0=cold % 1=hot
   set Known component names   = u
-  set Used constants          = cold=-5.0, hot=10.0
+  set Used constants          = cold=-1.0, hot=1.0
 end
 subsection Domain
   set Colorize                      = false
@@ -81,7 +81,7 @@ subsection IMEX Parameters
   set Use the KINSOL solver                        = true
 end
 subsection Initial solution
-  set Function constants  = cold=-5.0
+  set Function constants  = cold=-1.0
   set Function expression = cold
   set Variable names      = x,y,t
 end
@@ -138,7 +138,7 @@ subsection Zero average constraints
 end
 subsection pi-DoMUS
   set Adaptive refinement                            = true
-  set Max number of cells                            = 1000
+  set Max number of cells                            = 10000
   set Enable finer preconditioner                    = false
   set Initial global refinement                      = 1
   set Jacobian solver tolerance                      = 1e-8
