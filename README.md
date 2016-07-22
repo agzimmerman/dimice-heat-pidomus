@@ -20,4 +20,4 @@ Run with default parameters by running
 	
 Run with a parameter input file by running, for example
 
-	$DIMICE_HEAT_EXE $DIMICE_HEAT_ROOT/tests/poisson_problem_01.prm
+	$DIMICE_HEAT_EXE $DIMICE_HEAT_ROOT/inputs/sphere.prm
