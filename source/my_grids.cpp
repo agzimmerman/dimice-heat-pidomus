@@ -1,0 +1,102 @@
+/* ---------------------------------------------------------------------
+ *
+ * Copyright (C) 1999 - 2015 by the deal.II authors
+ *
+ * This file is part of the deal.II library.
+ *
+ * The deal.II library is free software; you can use it, redistribute
+ * it, and/or modify it under the terms of the GNU Lesser General
+ * Public License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * The full text of the license can be found in the file LICENSE at
+ * the top level of the deal.II distribution.
+ *
+ * ---------------------------------------------------------------------
+ */
+#include <deal.II/grid/tria.h>
+#include <deal.II/grid/tria_accessor.h>
+#include <deal.II/grid/tria_iterator.h>
+#include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/manifold_lib.h>
+#include <deal.II/grid/grid_out.h>
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <deal.II/grid/grid_reordering.h>
+#include "my_grids.h"
+namespace MyGrids
+{
+    using namespace dealii;
+    void make_grid_file()
+    {
+      Triangulation<2> grid;
+      sphere_cylinder_shell(grid, 0.25, 0.5, 1.0, 1.25);
+      std::ofstream out ("grid.vtk");
+      GridOut grid_out;
+      grid_out.write_vtk (grid, out);
+      std::cout << "Grid written to grid.vtk" << std::endl;
+      std::ofstream image_out("grid_image.eps");
+      grid_out.write_eps(grid, image_out);
+    }
+
+    template <int dim, int spacedim>
+    void sphere_cylinder_shell (dealii::Triangulation<dim,spacedim> & grid,
+                           const double inner_radius, // Radius of shell's inside boundary
+                           const double outer_radius, // Radius of shell's outside boundary
+                           const double inner_length, // Length of the inside cylinder
+                           const double outer_length) // Length of the outside cylinder
+    {
+        // Based on create_coarse_grid in http://dealii.org/8.4.1/doxygen/deal.II/step_14.html
+        Assert (dim==2, dealii::ExcNotImplemented());
+        using dealii::Point;
+        static const Point<dim> static_points[] = {
+            // Points of the shell's inner boundary:
+            Point<dim>(0,-inner_radius),
+            Point<dim>(inner_radius,0),
+            Point<dim>(inner_radius,inner_length),
+            Point<dim>(-inner_radius,inner_length),
+            Point<dim>(-inner_radius,0),
+            // Points of the shell's outer boundary:
+            Point<dim>(0,-outer_radius),
+            Point<dim>(outer_radius,0),
+            Point<dim>(outer_radius,inner_length),
+            Point<dim>(outer_radius,outer_length),
+            Point<dim>(inner_radius,outer_length),
+            Point<dim>(-inner_radius,outer_length),
+            Point<dim>(-outer_radius,outer_length),
+            Point<dim>(-outer_radius,inner_length),
+            Point<dim>(-outer_radius,0)
+        };
+        const unsigned int point_count = sizeof(static_points)/sizeof(static_points[0]);
+        const std::vector<Point<dim>> points(&static_points[0], &static_points[point_count]);
+        //auto vertices_per_cell = dealii::GeometryInfo<dim>::vertices_per_cell;
+        const int vertices_per_cell = 4; // ISO C++ forbids variable length array
+        const int cell_count = 7;
+        // @todo: What are the rules for ordering vertices?
+        // It should suffice to have a consistent orientation for each cell, but that does not seem to work.
+        // The ordering below arose from tediously guessing and checking.
+        static const int cell_vertices[cell_count][vertices_per_cell] = {
+            {4, 13, 0, 5},
+            {0, 5, 1, 6},
+            {1, 6, 2, 7},
+            {2, 7, 9, 8},
+            {3, 2, 10, 9},
+            {12, 3, 11, 10},
+            {13, 4, 12, 3},
+        };
+        std::vector<dealii::CellData<dim> > cells(cell_count, dealii::CellData<dim>());
+        for (unsigned int i=0; i< cell_count; ++i) {
+            for (unsigned int j=0; j < vertices_per_cell; ++j) {
+                cells[i].vertices[j] = cell_vertices[i][j];
+            }
+            cells[i].material_id = 0;
+        }
+        // Grid re-ordering only works if the grid already has a uniform orientation.
+        dealii::GridReordering<dim,dim>::reorder_cells(cells, true);
+        // @todo: How do I set the boundary lines for SubCellData?
+        grid.create_triangulation(points,
+                                  cells,
+                                  dealii::SubCellData());
+        // @todo: How do I set the spherical manifolds?
+    }
+}
