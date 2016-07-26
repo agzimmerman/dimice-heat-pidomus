@@ -48,6 +48,8 @@ namespace MyGrids
     {
         // Based on create_coarse_grid in http://dealii.org/8.4.1/doxygen/deal.II/step_14.html
         Assert (dim==2, dealii::ExcNotImplemented());
+        Assert (outer_radius > inner_radius, dealii::ExcInvalidState());
+        Assert (outer_length > inner_length, dealii::ExcInvalidState());
         using dealii::Point;
         static const Point<dim> static_points[] = {
             // Points of the shell's inner boundary:
@@ -93,10 +95,31 @@ namespace MyGrids
         }
         // Grid re-ordering only works if the grid already has a uniform orientation.
         dealii::GridReordering<dim,dim>::reorder_cells(cells, true);
-        // @todo: How do I set the boundary lines for SubCellData?
         grid.create_triangulation(points,
                                   cells,
                                   dealii::SubCellData());
+        // Set boundary id's similar to how it was done in the hyper_cube_with_cylindrical_hole implementation.
+        // This assumes that the origin of the coordinate system is at the center of the spherical manifolds.
+        double eps = 1e-3*inner_radius;
+        auto cell = grid.begin_active();
+        auto endc = grid.end();
+        for (; cell != endc; ++cell) {
+            for (unsigned int f=0; f<GeometryInfo<dim>::faces_per_cell; ++f) {
+                if (cell->face(f)->at_boundary()) {
+                    dealii::Point<dim> center = cell->face(f)->center();
+                    double x = center[0], y = center[1];
+                    if ((std::abs(y + inner_radius/2.) < eps) && (std::abs(x) - inner_radius/2.) < eps) {
+                        cell->face(f)->set_boundary_id(0); // On the inner spherical boundary.
+                    }
+                    else if ((-eps <= y) & (y <= inner_length + eps) & (std::abs(x) <= inner_radius + eps)) {
+                        cell->face(f)->set_boundary_id(1); // On the inner rectangular boundary
+                    }
+                    else {
+                        cell->face(f)->set_boundary_id(2); // on the outer boundary (spherical or rectangular).
+                    }
+                }
+            }
+        }
         // @todo: How do I set the spherical manifolds?
     }
 }
