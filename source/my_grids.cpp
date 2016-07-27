@@ -26,28 +26,25 @@
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/tria_boundary_lib.h>
 #include "my_grids.h"
-namespace MyGrids
-{
+namespace MyGrids {
     using namespace dealii;
-    void make_grid_file()
-    {
-      Triangulation<2> grid;
-      sphere_cylinder_shell(grid, 0.25, 0.5, 1.0, 1.25);
-      std::ofstream out ("grid.vtk");
-      GridOut grid_out;
-      grid_out.write_vtk (grid, out);
-      std::cout << "Grid written to grid.vtk" << std::endl;
-      std::ofstream image_out("grid_image.eps");
-      grid_out.write_eps(grid, image_out);
+    void make_grid_file() {
+        Triangulation<2> grid;
+        sphere_cylinder_shell(grid, 0.25, 0.5, 1.0, 1.25);
+        std::ofstream out ("grid.vtk");
+        GridOut grid_out;
+        grid_out.write_vtk (grid, out);
+        std::cout << "Grid written to grid.vtk" << std::endl;
+        std::ofstream image_out("grid_image.eps");
+        grid_out.write_eps(grid, image_out);
     }
-
     template <int dim, int spacedim>
-    void sphere_cylinder_shell (dealii::Triangulation<dim,spacedim> & grid,
-                           const double inner_radius, // Radius of shell's inside boundary
-                           const double outer_radius, // Radius of shell's outside boundary
-                           const double inner_length, // Length of the inside cylinder
-                           const double outer_length) // Length of the outside cylinder
-    {
+    void sphere_cylinder_shell(dealii::Triangulation<dim,spacedim> & grid,
+                                const double inner_radius, // Radius of shell's inside boundary
+                                const double outer_radius, // Radius of shell's outside boundary
+                                const double inner_length, // Length of the inside cylinder
+                                const double outer_length) // Length of the outside cylinder
+                            {
         // Based on create_coarse_grid in http://dealii.org/8.4.1/doxygen/deal.II/step_14.html
         // The origin of the coordinate system is at the center of the spherical manifolds.
         Assert (dim==2, dealii::ExcNotImplemented());
@@ -74,12 +71,12 @@ namespace MyGrids
         };
         const unsigned int point_count = sizeof(static_points)/sizeof(static_points[0]);
         const std::vector<Point<dim>> points(&static_points[0], &static_points[point_count]);
-        //auto vertices_per_cell = dealii::GeometryInfo<dim>::vertices_per_cell;
         const int vertices_per_cell = 4; // ISO C++ forbids variable length array
         const int cell_count = 7;
         // @todo: What are the rules for ordering vertices?
         // It should suffice to have a consistent orientation for each cell, but that does not seem to work.
         // The ordering below arose from tediously guessing and checking.
+        // Maybe instead a hyper shell should be created and then modified to our shape. This should guarantee correctness.
         static const int cell_vertices[cell_count][vertices_per_cell] = {
             {4, 13, 0, 5},
             {0, 5, 1, 6},
@@ -96,12 +93,11 @@ namespace MyGrids
             }
             cells[i].material_id = 0;
         }
-        // Grid re-ordering only works if the grid already has a uniform orientation.
-        dealii::GridReordering<dim,dim>::reorder_cells(cells, true);
+        dealii::GridReordering<dim,dim>::reorder_cells(cells, true); // Note: Re-ordering only works with uniformly oriented grid.
         grid.create_triangulation(points,
                                   cells,
                                   dealii::SubCellData());
-        // Set boundary id's similar to how it was done in the hyper_cube_with_cylindrical_hole implementation.
+        // Set boundary id's similar to how it was done in hyper_cube_with_cylindrical_hole.
         double eps = 1e-3*inner_radius;
         auto cell = grid.begin_active(), endc = grid.end();
         for (; cell != endc; ++cell) {
@@ -110,49 +106,25 @@ namespace MyGrids
                     dealii::Point<dim> center = cell->face(f)->center();
                     double x = center[0], y = center[1];
                     if ((std::abs(y + inner_radius/2.) < eps) && (std::abs(x) - inner_radius/2.) < eps) {
-                        cell->face(f)->set_all_boundary_ids(0); // on the inner spherical boundary
+                        cell->face(f)->set_boundary_id(0); // on the inner spherical boundary
                     }
                     else if ((-eps <= y) & (y <= inner_length + eps) & (std::abs(x) <= inner_radius + eps)) {
-                        cell->face(f)->set_all_boundary_ids(1); // on the inner rectangular boundary
+                        cell->face(f)->set_boundary_id(1); // on the inner rectangular boundary
                     }
                     else {
-                        cell->face(f)->set_all_boundary_ids(2); // on the outer spherical or rectuangular boundary
+                        cell->face(f)->set_boundary_id(2); // on the outer spherical or rectuangular boundary
                     }
                 }
             }
-        }
-        // Verify the number of times each boundary indicator has been used, using the code from Step-49.
-        {
-          std::map<unsigned int, unsigned int> boundary_count;
-          typename Triangulation<dim>::active_cell_iterator
-          cell = grid.begin_active(),
-          endc = grid.end();
-          for (; cell!=endc; ++cell)
-            {
-              for (unsigned int face=0; face<GeometryInfo<dim>::faces_per_cell; ++face)
-                {
-                  if (cell->face(face)->at_boundary())
-                    boundary_count[cell->face(face)->boundary_id()]++;
-                }
-            }
-          std::cout << " boundary indicators: ";
-          for (std::map<unsigned int, unsigned int>::iterator it=boundary_count.begin();
-               it!=boundary_count.end();
-               ++it)
-            {
-              std::cout << it->first << "(" << it->second << " times) ";
-            }
-          std::cout << std::endl;
         }
         // Set spherical manifolds.
         const dealii::SphericalManifold<dim> manifold_description(dealii::Point<dim>(0,0));
-        grid.set_manifold(0, manifold_description);
+        int spherical_manifold_id = 0;
+        grid.set_manifold(spherical_manifold_id, manifold_description);
         cell = grid.begin_active();
         for (; cell!=endc; ++cell) {
-            auto center = cell->center();
-            double y = center[1];
-            if (y < eps) {
-                cell->set_all_manifold_ids (0);
+            if ((cell->center())[1] < eps) {
+                cell->set_all_manifold_ids(spherical_manifold_id);
             }
         }
     }
