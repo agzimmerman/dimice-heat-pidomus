@@ -23,7 +23,8 @@
 #include <fstream>
 #include <cmath>
 #include <deal.II/grid/grid_reordering.h>
-#include<deal.II/grid/grid_tools.h>
+#include <deal.II/grid/grid_tools.h>
+#include <deal.II/grid/tria_boundary_lib.h>
 #include "my_grids.h"
 namespace MyGrids
 {
@@ -48,6 +49,7 @@ namespace MyGrids
                            const double outer_length) // Length of the outside cylinder
     {
         // Based on create_coarse_grid in http://dealii.org/8.4.1/doxygen/deal.II/step_14.html
+        // The origin of the coordinate system is at the center of the spherical manifolds.
         Assert (dim==2, dealii::ExcNotImplemented());
         Assert (outer_radius > inner_radius, dealii::ExcInvalidState());
         Assert (outer_length > inner_length, dealii::ExcInvalidState());
@@ -100,26 +102,21 @@ namespace MyGrids
                                   cells,
                                   dealii::SubCellData());
         // Set boundary id's similar to how it was done in the hyper_cube_with_cylindrical_hole implementation.
-        // This assumes that the origin of the coordinate system is at the center of the spherical manifolds.
         double eps = 1e-3*inner_radius;
-        auto cell = grid.begin_active();
-        auto endc = grid.end();
+        auto cell = grid.begin_active(), endc = grid.end();
         for (; cell != endc; ++cell) {
             for (unsigned int f=0; f<GeometryInfo<dim>::faces_per_cell; ++f) {
                 if (cell->face(f)->at_boundary()) {
                     dealii::Point<dim> center = cell->face(f)->center();
                     double x = center[0], y = center[1];
                     if ((std::abs(y + inner_radius/2.) < eps) && (std::abs(x) - inner_radius/2.) < eps) {
-                        cell->face(f)->set_boundary_id(0); // on the inner spherical boundary
+                        cell->face(f)->set_all_boundary_ids(0); // on the inner spherical boundary
                     }
                     else if ((-eps <= y) & (y <= inner_length + eps) & (std::abs(x) <= inner_radius + eps)) {
-                        cell->face(f)->set_boundary_id(1); // on the inner rectangular boundary
-                    }
-                    else if ((std::abs(y + outer_radius/2.) < eps) && (std::abs(x) - outer_radius/2.) < eps) {
-                        cell->face(f)->set_boundary_id(2); // on the outer spherical boundary
+                        cell->face(f)->set_all_boundary_ids(1); // on the inner rectangular boundary
                     }
                     else {
-                        cell->face(f)->set_boundary_id(3); // on the outer rectuangular boundary
+                        cell->face(f)->set_all_boundary_ids(2); // on the outer spherical or rectuangular boundary
                     }
                 }
             }
@@ -147,13 +144,16 @@ namespace MyGrids
             }
           std::cout << std::endl;
         }
-        //
-        // @todo: How do I set the spherical manifolds?
-        dealii::GridTools::copy_boundary_to_manifold_id(grid);
-        const dealii::SphericalManifold<dim> boundary_description(dealii::Point<dim>(0,0));
-        grid.set_manifold(0, boundary_description);
-        grid.set_manifold(2, boundary_description);
-        // Refine globally once just to verify the manifolds.
-        grid.refine_global(1);
+        // Set spherical manifolds.
+        const dealii::SphericalManifold<dim> manifold_description(dealii::Point<dim>(0,0));
+        grid.set_manifold(0, manifold_description);
+        cell = grid.begin_active();
+        for (; cell!=endc; ++cell) {
+            auto center = cell->center();
+            double y = center[1];
+            if (y < eps) {
+                cell->set_all_manifold_ids (0);
+            }
+        }
     }
 }
