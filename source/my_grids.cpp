@@ -23,6 +23,7 @@
 #include <fstream>
 #include <cmath>
 #include <deal.II/grid/grid_reordering.h>
+#include<deal.II/grid/grid_tools.h>
 #include "my_grids.h"
 namespace MyGrids
 {
@@ -109,17 +110,50 @@ namespace MyGrids
                     dealii::Point<dim> center = cell->face(f)->center();
                     double x = center[0], y = center[1];
                     if ((std::abs(y + inner_radius/2.) < eps) && (std::abs(x) - inner_radius/2.) < eps) {
-                        cell->face(f)->set_boundary_id(0); // On the inner spherical boundary.
+                        cell->face(f)->set_boundary_id(0); // on the inner spherical boundary
                     }
                     else if ((-eps <= y) & (y <= inner_length + eps) & (std::abs(x) <= inner_radius + eps)) {
-                        cell->face(f)->set_boundary_id(1); // On the inner rectangular boundary
+                        cell->face(f)->set_boundary_id(1); // on the inner rectangular boundary
+                    }
+                    else if ((std::abs(y + outer_radius/2.) < eps) && (std::abs(x) - outer_radius/2.) < eps) {
+                        cell->face(f)->set_boundary_id(2); // on the outer spherical boundary
                     }
                     else {
-                        cell->face(f)->set_boundary_id(2); // on the outer boundary (spherical or rectangular).
+                        cell->face(f)->set_boundary_id(3); // on the outer rectuangular boundary
                     }
                 }
             }
         }
+        // Verify the number of times each boundary indicator has been used, using the code from Step-49.
+        {
+          std::map<unsigned int, unsigned int> boundary_count;
+          typename Triangulation<dim>::active_cell_iterator
+          cell = grid.begin_active(),
+          endc = grid.end();
+          for (; cell!=endc; ++cell)
+            {
+              for (unsigned int face=0; face<GeometryInfo<dim>::faces_per_cell; ++face)
+                {
+                  if (cell->face(face)->at_boundary())
+                    boundary_count[cell->face(face)->boundary_id()]++;
+                }
+            }
+          std::cout << " boundary indicators: ";
+          for (std::map<unsigned int, unsigned int>::iterator it=boundary_count.begin();
+               it!=boundary_count.end();
+               ++it)
+            {
+              std::cout << it->first << "(" << it->second << " times) ";
+            }
+          std::cout << std::endl;
+        }
+        //
         // @todo: How do I set the spherical manifolds?
+        dealii::GridTools::copy_boundary_to_manifold_id(grid);
+        const dealii::SphericalManifold<dim> boundary_description(dealii::Point<dim>(0,0));
+        grid.set_manifold(0, boundary_description);
+        grid.set_manifold(2, boundary_description);
+        // Refine globally once just to verify the manifolds.
+        grid.refine_global(1);
     }
 }
