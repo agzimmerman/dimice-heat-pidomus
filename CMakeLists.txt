@@ -38,7 +38,7 @@ SET(_main source/main.cpp)
 # Declare all source files the target consists of:
 file(GLOB _files source/*cpp)
 
-INCLUDE_DIRECTORIES(source, include)
+INCLUDE_DIRECTORIES(include)
 
 FIND_PACKAGE(deal.II 8.3 REQUIRED
   HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
