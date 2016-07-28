@@ -15,7 +15,7 @@ subsection Domain
   set Optional double 2        = 0.5
   set Optional double 3        = 1.0
   set Optional double 4        = 1.25
-  set Create default manifolds = false // The default behavior copies boundary ID's to manifold ID's, which is bad.
+  set Create default manifolds = false # The default behavior copies boundary ID's to manifold ID's, which is bad.
   set Manifold descriptors     = 0=SphericalManifold
 end
 subsection Error Tables
