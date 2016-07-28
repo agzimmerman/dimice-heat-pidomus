@@ -1,5 +1,9 @@
 # dimice-heat-dealii
-First pi-DoMUS must be installed.
+# Build and install 
+The following branches of deal.II and related libraries are required:
+- deal.II: https://github.com/alexanderzimmerman/dealii/tree/sphere_cylinder_shell  
+- deal2lkit: https://github.com/alexanderzimmerman/deal2lkit/tree/sphere_cylinder_shell  
+- pi-DoMUS: https://github.com/alexanderzimmerman/pi-DoMUS/tree/work_around-max_cells_parameter  
 
 Set an environment variable pointing to pi-DoMUS, e.g.
 
@@ -13,7 +17,7 @@ Compile dimice-heat-dealii by running
 	cmake -DPIDOMUS_DIR=$PIDOMUS_DIR -DCMAKE_INSTALL_PREFIX=/usr/local/dimice-heat .. 
 	sudo make install
 	
-# Examples
+# Run
 These examples assumes that some environment variables have been set, for example
 
 	export DIMICE_HEAT_ROOT=~/dimice-heat-dealii
