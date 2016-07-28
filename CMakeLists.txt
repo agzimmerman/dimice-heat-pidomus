@@ -38,11 +38,6 @@ SET(_main source/main.cpp)
 ############################################################
 # Declare all source files the target consists of:
 file(GLOB _files source/*cpp)
-<<<<<<< HEAD
-
-INCLUDE_DIRECTORIES(include)
-=======
->>>>>>> sphere-cylinder
 
 INCLUDE_DIRECTORIES("include" "${PIDOMUS_DIR}/include")
 
