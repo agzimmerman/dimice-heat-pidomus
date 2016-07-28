@@ -32,3 +32,10 @@ Run with default parameters by running
 Run with a parameter input file by running, for example
 
 	dimice-heat $DIMICE_HEAT_ROOT/inputs/sphere-cylinder.prm
+
+# Example outputs
+These solutions were exported from ParaView and reformatted in word.
+- Solution from inputs/sphere.prm
+![alt tag](doc/Sphere.PNG)
+- Solution from inputs/sphere-cylinder.prm
+![alt tag](doc/Sphere-Cylinder.PNG)
