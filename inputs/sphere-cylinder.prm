@@ -82,7 +82,7 @@ subsection Refinement
 end
 subsection pi-DoMUS
   set Adaptive refinement                            = true
-  set Max number of cells                            = 10000
+  set Max number of cells                            = 1000
   set Enable finer preconditioner                    = false
   set Initial global refinement                      = 1
   set Jacobian solver tolerance                      = 1e-8
@@ -94,7 +94,7 @@ subsection pi-DoMUS
   set Overwrite Newton's iterations                  = true
   set Print some useful informations about processes = true
   set Refine mesh during transient                   = true
-  set Threshold for solver's restart                 = 1e-4
+  set Threshold for solver's restart                 = 0.1
   set Time stepper                                   = ida
   set Use direct solver if available                 = true
 end
