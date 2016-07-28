@@ -30,13 +30,13 @@
 # If your application follows the structure above, you don't need to 
 # specify anything else. 
 SET(TARGET heat)
-SET(_main source/main.cc)
+SET(_main source/main.cpp)
 
 ############################################################
 # Normally you shouldn't need to change anything below.
 ############################################################
 # Declare all source files the target consists of:
-file(GLOB _files source/*cc)
+file(GLOB _files source/*cpp)
 
 INCLUDE_DIRECTORIES(include)
 
