@@ -25,7 +25,8 @@
 # If you set the environemnt variable DEAL2LKIT_DIR or D2K_DIR, 
 # everything will work out of the box
 ##
-
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1.0)
+set (CMAKE_CXX_STANDARD 11)
 # Set the name of the project and target
 # If your application follows the structure above, you don't need to 
 # specify anything else. 
@@ -37,10 +38,13 @@ SET(_main source/main.cpp)
 ############################################################
 # Declare all source files the target consists of:
 file(GLOB _files source/*cpp)
+<<<<<<< HEAD
 
 INCLUDE_DIRECTORIES(include)
+=======
+>>>>>>> sphere-cylinder
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
+INCLUDE_DIRECTORIES("include" "${PIDOMUS_DIR}/include")
 
 FIND_PACKAGE(deal.II 8.3 REQUIRED
   HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
@@ -78,13 +82,19 @@ FOREACH(_build_type ${_d2_build_types})
 
     SET(_exe "${TARGET}${${_build_type}_postfix}")
     MESSAGE("-- Configuring executable ${_exe}")
-    ADD_EXECUTABLE(${_exe} ${_main})
-	TARGET_LINK_LIBRARIES(${_exe} "/usr/local/pidomus/lib/libpidomus-lib${_p}.so")
+    ADD_EXECUTABLE(${_exe} ${_main} ${_files})
+    TARGET_LINK_LIBRARIES(${_exe} "${PIDOMUS_DIR}/lib/libpidomus-lib${_p}.so")
     D2K_SETUP_TARGET(${_exe} ${_BUILD_TYPE})
-
+    
+    set_property(TARGET ${_exe} PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE)
+    install (TARGETS ${_exe} DESTINATION "bin")
+    
   ENDIF()
 ENDFOREACH()
 
+# Preferably we would install the entire inputs directory; how does one do that?
+# " install(DIRECTORY..." wasn't letting me install to DESTINATION "" or "${CMAKE_INSTALL_PREFIX}"
+install (FILES "inputs/sphere-cylinder.prm" DESTINATION "inputs")
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests AND ${ENABLE_APP_TESTING})
   ADD_SUBDIRECTORY(tests)
