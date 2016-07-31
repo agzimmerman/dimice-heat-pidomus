@@ -4,13 +4,13 @@
 # DEAL_II_GIT_BRANCH=   
 # DEAL_II_GIT_SHORTREV= e3ff743
 subsection Dirichlet boundary conditions
-  set IDs and component masks = 0=ALL % 1=ALL % 2=ALL
-  set IDs and expressions     = 0=hot % 1=warm % 2=cold
+  set IDs and component masks = 0=ALL % 1=ALL % 2=ALL % 3=ALL % 4=ALL % 5=ALL % 6=ALL % 7=ALL % 8=ALL % 9=ALL
   set Known component names   = u
   set Used constants          = hot=1.0, warm=0.1, cold=-1.0
+  set IDs and expressions     = 0=cold % 1=cold % 2=cold % 3=cold % 4=cold % 5=hot % 6=warm % 7=warm % 8=warm % 9=hot
 end
 subsection Domain
-  set Grid to generate         = sphere_cylinder_shell
+  set Grid to generate         = hemisphere_cylinder_shell
   set Optional double 1        = 0.25
   set Optional double 2        = 0.5
   set Optional double 3        = 1.0
@@ -84,7 +84,7 @@ subsection pi-DoMUS
   set Adaptive refinement                            = true
   set Max number of cells                            = 1000
   set Enable finer preconditioner                    = false
-  set Initial global refinement                      = 1
+  set Initial global refinement                      = 0
   set Jacobian solver tolerance                      = 1e-8
   set Max iterations                                 = 50
   set Max iterations finer prec.                     = 0
