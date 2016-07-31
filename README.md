@@ -1,8 +1,8 @@
 # dimice-heat-dealii
 # Build and install 
 The following branches of deal.II and related libraries are required:
-- deal.II: https://github.com/alexanderzimmerman/dealii/tree/sphere_cylinder_shell  
-- deal2lkit: https://github.com/alexanderzimmerman/deal2lkit/tree/sphere_cylinder_shell  
+- deal.II: https://github.com/alexanderzimmerman/dealii/tree/hemisphere_cylinder_shell  
+- deal2lkit: https://github.com/alexanderzimmerman/deal2lkit/tree/hemisphere_cylinder_shell  
 - pi-DoMUS: https://github.com/alexanderzimmerman/pi-DoMUS/tree/work_around-max_cells_parameter  
 
 Set an environment variable pointing to pi-DoMUS, e.g.
