@@ -37,7 +37,7 @@ SET(_main source/main.cpp)
 # Normally you shouldn't need to change anything below.
 ############################################################
 
-INCLUDE_DIRECTORIES("include" "${PIDOMUS_DIR}/include")
+
 
 FIND_PACKAGE(deal.II 8.3 REQUIRED
   HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
@@ -50,6 +50,9 @@ FIND_PACKAGE(deal2lkit 1.0 REQUIRED
   HINTS ${D2K_DIR} $ENV{D2K_DIR} $ENV{DEAL2LKIT_DIR}
   )
 D2K_INITIALIZE_CACHED_VARIABLES()
+
+INCLUDE_DIRECTORIES(include ${DEAL_II_INCLUDE_DIRS} ${D2K_INCLUDE_DIRS} ${PIDOMUS_DIR}/include)
+
 OPTION(ENABLE_APP_TESTING "Enable tests in this application." ON)
 
 # We add one library and one target for each type of deal.II library
@@ -94,3 +97,8 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests AND ${ENABLE_APP_TESTING})
   ADD_SUBDIRECTORY(tests)
   ENABLE_TESTING()
 endif()
+
+# Add shared library with Python bindings
+add_subdirectory(external/pybind11)
+pybind11_add_module(heat_problem source/heat_problem.cpp)
+TARGET_LINK_LIBRARIES(heat_problem ${LINK_FLAGS} "${PIDOMUS_DIR}/lib/libpidomus-lib${_p}.so")

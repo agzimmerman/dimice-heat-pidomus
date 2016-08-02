@@ -14,7 +14,7 @@ Compile dimice-heat-dealii by running
 	git clone git@github.com:alexanderzimmerman/dimice-heat-dealii.git
 	mkdir build
 	cd build
-	cmake -DPIDOMUS_DIR=$PIDOMUS_DIR -DCMAKE_INSTALL_PREFIX=/usr/local/dimice-heat .. 
+	cmake -DPIDOMUS_DIR=/usr/local/pidomus -DCMAKE_INSTALL_PREFIX=/usr/local/dimice-heat .. 
 	sudo make install
 	
 # Run
