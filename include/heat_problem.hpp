@@ -2,12 +2,12 @@
 #define HEAT_PROBLEM_H
 #include <interfaces/poisson_problem.h>
 #include <string>
-template <int dim> class HeatProblem {
+class HeatProblem {
 public:
     HeatProblem();
     void solve(std::string parameter_file_path="");
 private:
-    const int _dim;
-    PoissonProblem<dim,dim,LADealII>_pde_interface;
+    static const int _dim = 2;
+    PoissonProblem<_dim,_dim,LADealII>_pde_interface;
 };
 #endif // HEAT_PROBLEM_H

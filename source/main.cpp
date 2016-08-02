@@ -15,7 +15,7 @@ int main (int argc, char *argv[]) {
     }
     // Run the heat problem for the given parameter file.
     Utilities::MPI::MPI_InitFinalize mpi_init(argc, argv, numbers::invalid_unsigned_int);
-    HeatProblem<2> heat;
+    HeatProblem heat;
     heat.solve(parameter_file_path);
     _unused(mpi_init);
     return 0;
