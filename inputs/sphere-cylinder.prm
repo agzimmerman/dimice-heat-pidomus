@@ -15,6 +15,8 @@ subsection Domain
   set Optional double 2        = 0.5
   set Optional double 3        = 1.0
   set Optional double 4        = 1.25
+  set Optional double 5        = 0.8
+  set Optional point  1        = 1., 1.
   set Create default manifolds = false # The default behavior copies boundary ID's to manifold ID's, which is bad.
   set Manifold descriptors     = 0=SphericalManifold
 end
@@ -83,6 +85,9 @@ end
 subsection pi-DoMUS
   set Adaptive refinement                            = true
   set Max number of cells                            = 1000
+  set Grid transformatoin 0 = 0.
+  set Grid transformation 1 = 0.
+  set Grid transformation 2 = 0.
   set Enable finer preconditioner                    = false
   set Initial global refinement                      = 0
   set Jacobian solver tolerance                      = 1e-8
