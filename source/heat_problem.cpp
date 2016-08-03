@@ -1,6 +1,3 @@
-#include <pidomus.h>
-#include <interfaces/poisson_problem.h>
-#include <string>
 #include <heat_problem.hpp>
 HeatProblem::HeatProblem(std::string parameter_file_path) {
     _parameter_file_path = parameter_file_path;

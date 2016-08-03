@@ -1,7 +1,8 @@
 #ifndef HEAT_PROBLEM_H
 #define HEAT_PROBLEM_H
-#include <interfaces/poisson_problem.h>
 #include <string>
+#include <pidomus.h>
+#include <interfaces/poisson_problem.h>
 class HeatProblem {
 public:
     HeatProblem(std::string parameter_file_path="");
