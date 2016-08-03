@@ -5,7 +5,7 @@
 #include <interfaces/poisson_problem.h>
 class HeatProblem {
 public:
-    HeatProblem(std::string parameter_file_path="");
+    HeatProblem(std::vector<std::string> args={""});
     void solve();
 private:
     static const int _dim = 2;
