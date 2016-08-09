@@ -25,7 +25,7 @@
 # If you set the environemnt variable DEAL2LKIT_DIR or D2K_DIR, 
 # everything will work out of the box
 ##
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1.0)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.1)
 set (CMAKE_CXX_STANDARD 11)
 # Set the name of the project and target
 # If your application follows the structure above, you don't need to 
@@ -90,6 +90,7 @@ ENDFOREACH()
 # Preferably we would install the entire inputs directory; how does one do that?
 # " install(DIRECTORY..." wasn't letting me install to DESTINATION "" or "${CMAKE_INSTALL_PREFIX}"
 install (FILES "inputs/sphere-cylinder.prm" DESTINATION "inputs")
+install (FILES "inputs/sphere.prm" DESTINATION "inputs")
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests AND ${ENABLE_APP_TESTING})
   ADD_SUBDIRECTORY(tests)

@@ -1,5 +1,5 @@
 #include <pidomus.h>
-#include <interfaces/poisson_problem.h>
+#include "interfaces/poisson_problem_signals.h"
 #define _unused(x) ((void)(x)) // http://stackoverflow.com/questions/777261/avoiding-unused-variables-warnings-when-using-assert-in-a-release-build
 int main (int argc, char *argv[]) {
     const int dim = 2;
@@ -12,7 +12,7 @@ int main (int argc, char *argv[]) {
     }
     else {
         std::string exe_path = argv[0];
-        parameter_file_path = exe_path.substr(0, exe_path.find_last_of("\\/"))+"/../inputs/sphere-cylinder.prm";
+        parameter_file_path = exe_path.substr(0, exe_path.find_last_of("\\/"))+"/../inputs/sphere.prm";
         std::cout << "Using default parameters at " << parameter_file_path << std::endl;
     }
     PoissonProblem<dim,dim,LADealII> p;
