@@ -10,13 +10,6 @@ subsection Dirichlet boundary conditions
   set IDs and expressions     = 0=cold % 1=cold % 2=cold % 3=cold % 4=cold % 5=hot % 6=warm % 7=warm % 8=warm % 9=hot
 end
 subsection Domain
-  set Grid to generate         = hemisphere_cylinder_shell
-  set Optional double 1        = 0.25
-  set Optional double 2        = 0.5
-  set Optional double 3        = 1.0
-  set Optional double 4        = 1.25
-  set Optional double 5        = 0.0
-  set Optional point  1        = 0.0, 0.0
   set Create default manifolds = false # The default behavior copies boundary ID's to manifold ID's, which is bad.
   set Manifold descriptors     = 0=SphericalManifold
 end
@@ -78,16 +71,13 @@ subsection Poisson problem
 end
 subsection Refinement
   set Bottom fraction                        = 0.100000
+  set Top fraction                           = 0.300000
   set Order (optimize)                       = 2
   set Refinement strategy                    = fraction
-  set Top fraction                           = 0.300000
+  set Maximum number of cells (if available) = 1000
 end
 subsection pi-DoMUS
   set Adaptive refinement                            = true
-  set Max number of cells                            = 1000
-  set Grid transformatoin 0 = 0.
-  set Grid transformation 1 = 0.
-  set Grid transformation 2 = 0.
   set Enable finer preconditioner                    = false
   set Initial global refinement                      = 0
   set Jacobian solver tolerance                      = 1e-8
@@ -99,7 +89,7 @@ subsection pi-DoMUS
   set Overwrite Newton's iterations                  = true
   set Print some useful informations about processes = true
   set Refine mesh during transient                   = true
-  set Threshold for solver's restart                 = 0.1
+  set Threshold for solver's restart                 = 0.25
   set Time stepper                                   = ida
   set Use direct solver if available                 = true
 end

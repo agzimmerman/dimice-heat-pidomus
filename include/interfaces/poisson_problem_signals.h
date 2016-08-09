@@ -1,6 +1,7 @@
 #ifndef _pidoums_poisson_h_
 #define _pidoums_poisson_h_
 
+#include "grids.h"
 #include "pde_system_interface.h"
 
 using namespace dealii;
@@ -41,6 +42,15 @@ public:
       std::cout << "ciao mondo" << std::endl;
     }
     );
+
+    // Connect to signal to use custom grid function
+    signals.postprocess_newly_created_triangulation.connect(
+	[&](typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
+	    double inner_radius = 0.25, outer_radius = 0.5, inner_length = 1.0, outer_length = 1.25;
+	    tria.clear();
+	    Grids::hemisphere_cylinder_shell(tria,
+		inner_radius, outer_radius, inner_length, outer_length);
+        });
 
     // or we can define a lambda first
     auto l =  [this](typename LAC::VectorType &, typename LAC::VectorType &)
@@ -99,7 +109,6 @@ public:
     {
       pcout << "#########  solver_should_restart"<<std::endl;
     });
-
   }
 private:
   mutable shared_ptr<TrilinosWrappers::PreconditionJacobi> preconditioner;
