@@ -10,8 +10,7 @@ subsection Dirichlet boundary conditions
   set IDs and expressions     = 0=cold % 1=cold % 2=cold % 3=cold % 4=cold % 5=hot % 6=warm % 7=warm % 8=warm % 9=hot
 end
 subsection Domain
-  set Create default manifolds = false # The default behavior copies boundary ID's to manifold ID's, which is bad.
-  set Manifold descriptors     = 0=SphericalManifold
+  set Create default manifolds = false # The default behavior copies boundary ID's to manifold ID's
 end
 subsection Error Tables
   set Compute error            = false
@@ -73,7 +72,7 @@ subsection Refinement
   set Bottom fraction                        = 0.100000
   set Top fraction                           = 0.300000
   set Order (optimize)                       = 2
-  set Refinement strategy                    = fraction
+  set Refinement strategy                    = number
   set Maximum number of cells (if available) = 1000
 end
 subsection pi-DoMUS

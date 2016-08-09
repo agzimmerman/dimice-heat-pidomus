@@ -42,28 +42,15 @@ public:
 	    tria.clear();
 	    Grids::hemisphere_cylinder_shell(tria,
 		inner_radius, outer_radius, inner_length, outer_length);
-        });
-    signals.begin_refine_mesh.connect(
-	[&](typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
 	    // Attach spherical manifold
-            const SphericalManifold<2> manifold_description(Point<2>(0,0));
+	    static const SphericalManifold<2> manifold_description(Point<2>(0,0));
 	    tria.set_manifold(0, manifold_description);
         });
-    signals.end_refine_mesh.connect(
+    signals.cleanup.connect(
 	[&](typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
 	    // Detach manifold
 	    tria.set_manifold(0);
-        });
-    signals.begin_refine_and_transfer_solutions.connect(
-	[&](typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
-	    // Attach spherical manifold
-            const SphericalManifold<2> manifold_description(Point<2>(0,0));
-	    tria.set_manifold(0, manifold_description);
-        });
-    signals.end_refine_and_transfer_solutions.connect(
-	[&](typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
-	    // Detach manifold
-	    tria.set_manifold(0);
+	    tria.clear();
         });
   }
 private:
