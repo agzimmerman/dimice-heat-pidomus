@@ -35,14 +35,6 @@ public:
     // first of all we get the struct Signals from pidomus
     auto &signals = this->get_signals();
 
-    // we can connect calling .connect( and defining a lambda
-    signals.fix_initial_conditions.connect(
-      [this](typename LAC::VectorType &, typename LAC::VectorType &)
-    {
-      std::cout << "ciao mondo" << std::endl;
-    }
-    );
-
     // Connect to signal to use custom grid function
     signals.postprocess_newly_created_triangulation.connect(
 	[&](typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
@@ -50,65 +42,10 @@ public:
 	    tria.clear();
 	    Grids::hemisphere_cylinder_shell(tria,
 		inner_radius, outer_radius, inner_length, outer_length);
+	    // Attach spherical manifold
+            const SphericalManifold<2> manifold_description(Point<2>(0,0));
+	    tria.set_manifold (0, manifold_description);
         });
-
-    // or we can define a lambda first
-    auto l =  [this](typename LAC::VectorType &, typename LAC::VectorType &)
-    {
-      std::cout << "ho raffinato" << std::endl;
-    };
-
-    // and then attach the just defined lambda
-    signals.fix_solutions_after_refinement.connect(l);
-
-
-    // herebelow, we connect to all the begin_* signals available in piDoMUS
-    auto &pcout = this->get_pcout();
-    signals.begin_make_grid_fe.connect(
-      [&]()
-    {
-      pcout << "#########  make_grid_fe"<<std::endl;
-    });
-    signals.begin_setup_dofs.connect(
-      [&]()
-    {
-      pcout << "#########  setup_dofs"<<std::endl;
-    });
-    signals.begin_refine_mesh.connect(
-      [&]()
-    {
-      pcout << "#########  refine_mesh"<<std::endl;
-    });
-    signals.begin_setup_jacobian.connect(
-      [&]()
-    {
-      pcout << "#########  setup_jacobian"<<std::endl;
-    });
-    signals.begin_residual.connect(
-      [&]()
-    {
-      pcout << "#########  residual"<<std::endl;
-    });
-    signals.begin_solve_jacobian_system.connect(
-      [&]()
-    {
-      pcout << "#########  solve_jacobian_system"<<std::endl;
-    });
-    signals.begin_refine_and_transfer_solutions.connect(
-      [&]()
-    {
-      pcout << "#########  refine_and_transfer_solutions"<<std::endl;
-    });
-    signals.begin_assemble_matrices.connect(
-      [&]()
-    {
-      pcout << "#########  assemble_matrices"<<std::endl;
-    });
-    signals.begin_solver_should_restart.connect(
-      [&]()
-    {
-      pcout << "#########  solver_should_restart"<<std::endl;
-    });
   }
 private:
   mutable shared_ptr<TrilinosWrappers::PreconditionJacobi> preconditioner;
