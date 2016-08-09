@@ -43,8 +43,8 @@ public:
 	    Grids::hemisphere_cylinder_shell(tria,
 		inner_radius, outer_radius, inner_length, outer_length);
 	    // Attach spherical manifold
-            const SphericalManifold<2> manifold_description(Point<2>(0,0));
-	    tria.set_manifold (0, manifold_description);
+            //const SphericalManifold<2> manifold_description(Point<2>(0,0));
+	    //tria.set_manifold (0, manifold_description);
         });
   }
 private:
