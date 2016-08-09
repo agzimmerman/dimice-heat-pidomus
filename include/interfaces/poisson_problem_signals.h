@@ -46,12 +46,6 @@ public:
 	    static const SphericalManifold<2> manifold_description(Point<2>(0,0));
 	    tria.set_manifold(0, manifold_description);
         });
-    signals.cleanup.connect(
-	[&](typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
-	    // Detach manifold
-	    tria.set_manifold(0);
-	    tria.clear();
-        });
   }
 private:
   mutable shared_ptr<TrilinosWrappers::PreconditionJacobi> preconditioner;
