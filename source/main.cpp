@@ -23,11 +23,7 @@ int main (int argc, char *argv[]) {
     piDoMUS<dim,dim,LADealII> solver("pi-DoMUS", p);
     ParameterAcceptor::initialize(parameter_file_path, "used_parameters.prm");
     solver.run();
-    // Detach the manifold. This is a quick hack to work around deal2lkit grid generator limitations.
-    //SimulatorAccess<dim,dim,LADealII> accessor(solver);
-    //dealii::parallel::distributed::Triangulation<2,2> tria = accessor.get_triangulation();
-    //tria.set_manifold(0);
-    // Other cleanup
+    // Cleanup
     _unused(mpi_init);
     return 0;
 }
