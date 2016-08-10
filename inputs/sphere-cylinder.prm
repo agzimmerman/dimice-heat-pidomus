@@ -72,13 +72,13 @@ subsection Refinement
   set Bottom fraction                        = 0.100000
   set Top fraction                           = 0.300000
   set Order (optimize)                       = 2
-  set Refinement strategy                    = number
+  set Refinement strategy                    = fraction
   set Maximum number of cells (if available) = 1000
 end
 subsection pi-DoMUS
   set Adaptive refinement                            = true
   set Enable finer preconditioner                    = false
-  set Initial global refinement                      = 0
+  set Initial global refinement                      = 3
   set Jacobian solver tolerance                      = 1e-8
   set Max iterations                                 = 50
   set Max iterations finer prec.                     = 0
@@ -88,7 +88,7 @@ subsection pi-DoMUS
   set Overwrite Newton's iterations                  = true
   set Print some useful informations about processes = true
   set Refine mesh during transient                   = true
-  set Threshold for solver's restart                 = 0.25
+  set Threshold for solver's restart                 = 0.2
   set Time stepper                                   = ida
   set Use direct solver if available                 = true
 end
