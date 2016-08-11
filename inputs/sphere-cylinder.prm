@@ -58,7 +58,7 @@ subsection Initial solution_dot
   set Variable names      = x,y,t
 end
 subsection Output Parameters
-  set Output format                  = vtu
+  set Output format                  = vtk
   set Output partitioning            = false
   set Problem base name              = solution
   set Solution names                 = u
