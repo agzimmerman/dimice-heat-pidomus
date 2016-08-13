@@ -8,8 +8,10 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <deal.II/numerics/fe_field_function.h>
 
-#include "grids.h"
 #include "pde_system_interface.h"
+#include "grids.h"
+#include "extrapolated_field_function.h"
+
 
 using namespace dealii;
 
@@ -105,16 +107,14 @@ public:
             boost::archive::text_iarchive archive(fs);
             archive >> old_solution_dot;
 	}
+	// Transform the serialized domain per the new state vector.
+
 	// Make the FE field functions	
-        Functions::FEFieldFunction<dim,DoFHandler<dim,dim>,LAC>
-	    solution_field(old_dof_handler, old_solution);
-	Functions::FEFieldFunction<dim,DoFHandler<dim,dim>,LAC>
-	    solution_dot_field(old_dof_handler, old_solution_dot);
+        ExtrapolatedField<dim,LAC> solution_field(old_dof_handler, old_solution);
+	ExtrapolatedField<dim,LAC> solution_dot_field(old_dof_handler, old_solution_dot);
 	// VectorTools::interpolate transformed old solution onto current FE space
 	VectorTools::interpolate(dof_handler, solution_field, solution);
    	VectorTools::interpolate(dof_handler, solution_dot_field, solution_dot);
-	// Handle values that weren't within the transformed domain
-	// Actually I should make a custom Function that returns the ambient temperature on failure.
     });
   }
 private:
