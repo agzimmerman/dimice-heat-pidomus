@@ -19,8 +19,8 @@ int main (int argc, char *argv[]) {
         std::cout << "Using default parameters at " << parameter_file_path << std::endl;
     }
     // Initialize and run pi-DoMUS
-    PoissonProblem<dim,dim,LADealII> p;
-    piDoMUS<dim,dim,LADealII> solver("pi-DoMUS", p);
+    PoissonProblem<dim,dim,LATrilinos> p;
+    piDoMUS<dim,dim,LATrilinos> solver("pi-DoMUS", p);
     ParameterAcceptor::initialize(parameter_file_path, "used_parameters.prm");
     solver.run();
     // Cleanup
