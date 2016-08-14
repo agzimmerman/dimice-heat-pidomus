@@ -47,6 +47,7 @@ public:
     // Connect to signal to use custom grid function.
     signals.postprocess_newly_created_triangulation.connect(
             [&](typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
+	std::cout << "Connected to signals.postprocess_newly_created_triangulation" << std::endl;
 	double inner_radius = 0.25, outer_radius = 0.5, inner_length = 1.0, outer_length = 1.25;
 	tria.clear();
 	Grids::hemisphere_cylinder_shell(tria,
@@ -62,6 +63,7 @@ public:
     signals.serialize_before_return.connect([&](DoFHandler<dim,dim> &dof_handler,
                                                 typename LAC::VectorType &solution,
                                                 typename LAC::VectorType &solution_dot) {
+	std::cout << "Connected to signals.serialize_before_return" << std::endl;
 	{
 	    std::ofstream fs("serialized_dof_handler.txt");
             boost::archive::text_oarchive archive(fs);
@@ -82,6 +84,7 @@ public:
     signals.fix_initial_conditions.connect([&](DoFHandler<dim,dim> &dof_handler,
 					       typename LAC::VectorType &solution,
                                                typename LAC::VectorType &solution_dot) {
+	std::cout << "Connected to signals.fix_initial_conditions" << std::endl;
 	// If a serialized solution exists, then initialize with that solution.
 	{	
 	    std::ifstream file_to_check("serialized_solution.txt");
@@ -89,6 +92,7 @@ public:
 	        return;
 	    }
         }
+	std::cout << "Initializing from serialized solution." << std::endl;
         // Load serialized data
 	DoFHandler<dim,dim> old_dof_handler;
 	typename LAC::VectorType old_solution, old_solution_dot;
