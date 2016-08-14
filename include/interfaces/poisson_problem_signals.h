@@ -6,11 +6,11 @@
 #include <string>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
-#include <deal.II/numerics/fe_field_function.h>
 
-#include "pde_system_interface.h"
 #include "grids.h"
-#include "extrapolated_field_function.h"
+#include "extrapolated_field.h"
+#include "pde_system_interface.h"
+
 
 
 using namespace dealii;
@@ -110,8 +110,10 @@ public:
 	// Transform the serialized domain per the new state vector.
 
 	// Make the FE field functions	
-        ExtrapolatedField<dim,LAC> solution_field(old_dof_handler, old_solution);
-	ExtrapolatedField<dim,LAC> solution_dot_field(old_dof_handler, old_solution_dot);
+        MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,LAC::VectorType>
+	    solution_field(old_dof_handler, old_solution);
+	MyFunctions::ExtrapolatedField<dim,DofHandler<dim,dim>,LAC::VectorType>
+	    solution_dot_field(old_dof_handler, old_solution_dot);
 	// VectorTools::interpolate transformed old solution onto current FE space
 	VectorTools::interpolate(dof_handler, solution_field, solution);
    	VectorTools::interpolate(dof_handler, solution_dot_field, solution_dot);
