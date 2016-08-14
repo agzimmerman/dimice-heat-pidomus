@@ -2,7 +2,7 @@
 #define _extrapolated_field_h_
 
 #include <deal.II/numerics/fe_field_function.h>
-/*
+/**
  * @brief Extends the FEFieldFunction class with nearest neighbor extrapolation outside of the domain.
  *
  * @detail
@@ -19,12 +19,16 @@ template< int dim,
           typename VectorType=Vector<double> >
 class ExtrapolatedField : public Functions::FEFieldFunction<dim,DoFHandlerType,VectorType> {
     public:
-        using Functions::FEFieldFunction<dim,DoFHandlerType,VectorType>::FEFieldFunction;
+	ExtrapolatedField(const DoFHandlerType &_dof_handler, const VectorType &f)
+	    : Functions::FEFieldFunction<dim,DoFHandlerType,VectorType> (_dof_handler, f),
+            dof_handler(&_dof_handler, "ExtrapolatedField") {}
 	virtual double extrapolated_value(const Point<dim> &p,
                                           const unsigned int component = 0) const;
     private:
+        SmartPointer<const DoFHandlerType,ExtrapolatedField<dim,DoFHandlerType,VectorType>>	  
+	    dof_handler;
 	Point<dim> get_nearest_boundary_vertex(const Point<dim> &point);
-};
+};  
 
 template<int dim, typename DoFHandlerType, typename VectorType>
 double ExtrapolatedField<dim,DoFHandlerType,VectorType>::
@@ -32,11 +36,10 @@ double ExtrapolatedField<dim,DoFHandlerType,VectorType>::
                            const unsigned int) const {
     double val;
     try {
-        val = value(point);
+        val = this->value(point);
     }
     catch (VectorTools::ExcPointNotAvailableHere) {
-	val = value(get_nearest_boundary_vertex(dh,
-                                                point));
+	val = this->value(this->get_nearest_boundary_vertex(point));
     }
     return val;
 }
@@ -47,7 +50,7 @@ Point<dim> ExtrapolatedField<dim,DoFHandlerType,VectorType>::
     double arbitrarily_large_number = 1.e32;
     double nearest_distance = arbitrarily_large_number;
     Point<dim> nearest_vertex;
-    for (auto cell : dh.active_cell_iterators()) {
+    for (auto cell : dof_handler->active_cell_iterators()) {
 	if (!cell->at_boundary()) {
 	    continue;
 	}
