@@ -1,6 +1,12 @@
 #ifndef _pidoums_poisson_h_
 #define _pidoums_poisson_h_
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 #include "grids.h"
 #include "pde_system_interface.h"
 
@@ -46,6 +52,27 @@ public:
 	    static const SphericalManifold<2> manifold_description(Point<2>(0,0));
 	    tria.set_manifold(0, manifold_description);
         });
+    // Connect to signal to serialize data before returning from pi-DoMUS.
+    signals.serialize_before_return.connect([&](DoFHandler<dim,dim> &dof_handler,
+                                     		typename LAC::VectorType &solution,
+                                     		typename LAC::VectorType &solution_dot) {
+	std::cout << "Connected to signals.serialize_before_return" << std::endl;
+	{
+	    std::ofstream fs("serialized_dof_handler.txt");
+            boost::archive::text_oarchive archive(fs);
+            archive << dof_handler;
+	}
+        {
+	    std::ofstream fs("serialized_solution.txt");
+            boost::archive::text_oarchive archive(fs);
+            archive << solution;
+	}
+	{
+	    std::ofstream fs("serialized_solution_dot.txt");
+            boost::archive::text_oarchive archive(fs);
+            archive << solution_dot;
+	}
+    });
   }
 private:
   mutable shared_ptr<TrilinosWrappers::PreconditionJacobi> preconditioner;
