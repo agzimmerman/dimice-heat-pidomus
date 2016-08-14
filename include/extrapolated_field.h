@@ -3,7 +3,7 @@
 
 #include <deal.II/numerics/fe_field_function.h>
 /**
- * @brief Extends the FEFieldFunction class with nearest neighbor extrapolation outside of the domain.
+ * @brief Extends the FEFieldFunction class with nearest neighbor extrapolation.
  *
  * @detail
  *
@@ -23,7 +23,7 @@ class ExtrapolatedField : public Functions::FEFieldFunction<dim,DoFHandlerType,V
 	    : Functions::FEFieldFunction<dim,DoFHandlerType,VectorType> (_dof_handler, f),
             dof_handler(&_dof_handler, "ExtrapolatedField") {}
 	virtual double extrapolated_value(const Point<dim> &p,
-                                          const unsigned int component = 0) const;
+                                          const unsigned int component = 0);
     private:
         SmartPointer<const DoFHandlerType,ExtrapolatedField<dim,DoFHandlerType,VectorType>>	  
 	    dof_handler;
@@ -33,7 +33,7 @@ class ExtrapolatedField : public Functions::FEFieldFunction<dim,DoFHandlerType,V
 template<int dim, typename DoFHandlerType, typename VectorType>
 double ExtrapolatedField<dim,DoFHandlerType,VectorType>::
 	extrapolated_value(const Point<dim> &point,
-                           const unsigned int) const {
+                           const unsigned int) {
     double val;
     try {
         val = this->value(point);

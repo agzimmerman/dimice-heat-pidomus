@@ -38,8 +38,8 @@ public:
                                 LinearOperator<LATrilinos::VectorType> &,
                                 LinearOperator<LATrilinos::VectorType> &,
                                 LinearOperator<LATrilinos::VectorType> &) const;
-  template <typename VectorType>
-  void connect_to_signals() const
+
+  virtual void connect_to_signals() const
   {
     // first of all we get the struct Signals from pidomus
     auto &signals = this->get_signals();
@@ -60,8 +60,8 @@ public:
     });
     // Connect to signal to serialize data before returning from pi-DoMUS.
     signals.serialize_before_return.connect([&](DoFHandler<dim,dim> &dof_handler,
-                                                VectorType &solution,
-                                                VectorType &solution_dot) {
+                                                typename LAC::VectorType &solution,
+                                                typename LAC::VectorType &solution_dot) {
 	{
 	    std::ofstream fs("serialized_dof_handler.txt");
             boost::archive::text_oarchive archive(fs);
@@ -80,8 +80,8 @@ public:
     });
     // Connect to signal to modify initial conditions.
     signals.fix_initial_conditions.connect([&](DoFHandler<dim,dim> &dof_handler,
-					       VectorType &solution,
-                                               VectorType &solution_dot) {
+					       typename LAC::VectorType &solution,
+                                               typename LAC::VectorType &solution_dot) {
 	// If a serialized solution exists, then initialize with that solution.
 	{	
 	    std::ifstream file_to_check("serialized_solution.txt");
@@ -91,7 +91,7 @@ public:
         }
         // Load serialized data
 	DoFHandler<dim,dim> old_dof_handler;
-	VectorType old_solution, old_solution_dot;
+	typename LAC::VectorType old_solution, old_solution_dot;
 	{
 	    std::ifstream fs("serialized_dof_handler.txt");
             boost::archive::text_iarchive archive(fs);
@@ -110,9 +110,9 @@ public:
 	// Transform the serialized domain per the new state vector.
 
 	// Make the FE field functions	
-        MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,VectorType>
+        MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,typename LAC::VectorType>
 	    solution_field(old_dof_handler, old_solution);
-	MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,VectorType>
+	MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,typename LAC::VectorType>
 	    solution_dot_field(old_dof_handler, old_solution_dot);
 	// VectorTools::interpolate transformed old solution onto current FE space
 	VectorTools::interpolate(dof_handler, solution_field, solution);
