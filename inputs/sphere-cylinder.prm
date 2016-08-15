@@ -84,11 +84,11 @@ subsection Refinement
 end
 subsection pi-DoMUS
   set Adaptive refinement                            = true
-  set Max number of cells                            = 1000
+  set Max number of cells                            = 500
   set Enable finer preconditioner                    = false
   set Initial global refinement                      = 0
   set Jacobian solver tolerance                      = 1e-8
-  set Max iterations                                 = 50
+  set Max iterations                                 = 100
   set Max iterations finer prec.                     = 0
   set Max tmp vectors                                = 30
   set Max tmp vectors for finer system               = 50
