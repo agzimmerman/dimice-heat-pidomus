@@ -25,7 +25,7 @@
 # If you set the environemnt variable DEAL2LKIT_DIR or D2K_DIR, 
 # everything will work out of the box
 ##
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1.0)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
 set (CMAKE_CXX_STANDARD 11)
 # Set the name of the project and target
 # If your application follows the structure above, you don't need to 
