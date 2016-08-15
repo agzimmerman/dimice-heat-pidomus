@@ -7,6 +7,8 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
+#include <deal.II/grid/tria.h>
+#include <deal.II/distributed/tria.h>
 #include <deal.II/distributed/solution_transfer.h>
 
 #include "pde_system_interface.h"
@@ -46,7 +48,7 @@ public:
 
     signals.postprocess_newly_created_triangulation.connect([&]
 	    (typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
-	tria.save("serialized_coarse_triangulation.txt");
+	tria.save(serial_coarse_tria_file_name.c_str());
     });
         
 
@@ -63,10 +65,39 @@ public:
 	tria.save("serialized_solution_dot.txt");
     });
 
+    // Connect to signal to modify initial conditions.
+    signals.deserialize_initial_conditions.connect([&](DoFHandler<dim,dim> &dof_handler,
+					       typename LAC::VectorType &solution,
+                                               typename LAC::VectorType &solution_dot) {
+	std::cout << "Connected to signals.deserialize_initial_conditions" << std::endl;
+	// If a serialized solution exists, then initialize with that solution.
+	{	
+	    std::ifstream file_to_check("serialized_solution.txt");
+	    if (!file_to_check.good()) {
+	        return;
+	    }
+        }
+	std::cout << "Initializing from serialized solution." << std::endl;
+        // Load serialized data
+	double r0 = 0.25, r1 = 0.5, l0 = 1.0, l1 = 1.25;
+        Point<3> trans;
+	trans[0] = 0;
+	trans[1] = 0;
+	trans[2] = 0;
+	parallel::distributed::Triangulation<dim,spacedim> parallel_coarse_tria(MPI_COMM_WORLD);
+        GridGenerator::hemisphere_cylinder_shell(parallel_coarse_tria, r0, r1, l0, l1, trans);
+        parallel_coarse_tria.load("serialized_solution.txt");
+	parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType> sol_trans(dof_handler);
+	sol_trans.deserialize(solution);
+        parallel_coarse_tria.load("serialized_solution_dot.txt");
+	sol_trans.deserialize(solution_dot);
+    });
+
   }
 
 private:
   mutable shared_ptr<TrilinosWrappers::PreconditionJacobi> preconditioner;
+  std::string serial_coarse_tria_file_name = "serialized_coarse_triangulation.txt";
 };
 
 template <int dim, int spacedim, typename LAC>
