@@ -52,6 +52,8 @@ public:
 	parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType> sol_trans(dof_handler);
 	sol_trans.prepare_serialization(solution);
 	tria.save("serialized_solution.txt");
+	sol_trans.prepare_serialization(solution_dot);
+	tria.save("serialized_solution_dot.txt");
     });
 
   }
