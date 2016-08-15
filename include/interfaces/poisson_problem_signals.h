@@ -38,10 +38,17 @@ public:
                                 LinearOperator<LATrilinos::VectorType> &,
                                 LinearOperator<LATrilinos::VectorType> &) const;
 
+
   virtual void connect_to_signals() const
   {
     // first of all we get the struct Signals from pidomus
     auto &signals = this->get_signals();
+
+    signals.postprocess_newly_created_triangulation.connect([&]
+	    (typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
+	tria.save("serialized_coarse_triangulation.txt");
+    });
+        
 
     // Connect to signal to serialize data before returning from pi-DoMUS.
     signals.use_solution_before_return.connect([&](parallel::distributed::Triangulation<dim,spacedim> &tria,
