@@ -37,6 +37,35 @@ public:
                                 LinearOperator<LATrilinos::VectorType> &,
                                 LinearOperator<LATrilinos::VectorType> &) const;
 
+  virtual void connect_to_signals() const
+  {
+    // first of all we get the struct Signals from pidomus
+    auto &signals = this->get_signals();
+
+    // Connect to signal to serialize data before returning from pi-DoMUS.
+    signals.use_solution_before_return.connect([&](DoFHandler<dim,spacedim> &dof_handler,
+                                                   typename LAC::VectorType &solution,
+                                                   typename LAC::VectorType &solution_dot) {
+	std::cout << "Connected to signals.serialize_before_return" << std::endl;
+	{
+	    std::ofstream fs("serialized_dof_handler.txt");
+            boost::archive::text_oarchive archive(fs);
+            archive << dof_handler;
+	}
+        {
+	    std::ofstream fs("serialized_solution.txt");
+            boost::archive::text_oarchive archive(fs);
+            archive << solution;
+	}
+	{
+	    std::ofstream fs("serialized_solution_dot.txt");
+            boost::archive::text_oarchive archive(fs);
+            archive << solution_dot;
+	}
+    });
+
+  }
+
 private:
   mutable shared_ptr<TrilinosWrappers::PreconditionJacobi> preconditioner;
 };
