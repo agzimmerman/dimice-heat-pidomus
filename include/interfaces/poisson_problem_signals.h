@@ -7,8 +7,9 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
-#include "pde_system_interface.h"
+#include <deal.II/distributed/solution_transfer.h>
 
+#include "pde_system_interface.h"
 
 
 using namespace dealii;
@@ -43,25 +44,14 @@ public:
     auto &signals = this->get_signals();
 
     // Connect to signal to serialize data before returning from pi-DoMUS.
-    signals.use_solution_before_return.connect([&](DoFHandler<dim,spacedim> &dof_handler,
+    signals.use_solution_before_return.connect([&](parallel::distributed::Triangulation<dim,spacedim> &tria,
+						   DoFHandler<dim,spacedim> &dof_handler,
                                                    typename LAC::VectorType &solution,
                                                    typename LAC::VectorType &solution_dot) {
 	std::cout << "Connected to signals.serialize_before_return" << std::endl;
-	{
-	    std::ofstream fs("serialized_dof_handler.txt");
-            boost::archive::text_oarchive archive(fs);
-            archive << dof_handler;
-	}
-        {
-	    std::ofstream fs("serialized_solution.txt");
-            boost::archive::text_oarchive archive(fs);
-            archive << solution;
-	}
-	{
-	    std::ofstream fs("serialized_solution_dot.txt");
-            boost::archive::text_oarchive archive(fs);
-            archive << solution_dot;
-	}
+	parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType> sol_trans(dof_handler);
+	sol_trans.prepare_serialization(solution);
+	tria.save("serialized_solution.txt");
     });
 
   }
