@@ -4,13 +4,20 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <boost/archive/text_oarchive.hpp>
+
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
 
 #include <deal.II/grid/tria.h>
 #include <deal.II/distributed/tria.h>
 #include <deal.II/distributed/solution_transfer.h>
 
+#include "extrapolated_field.h"
 #include "pde_system_interface.h"
 
 
@@ -48,56 +55,124 @@ public:
 
     signals.postprocess_newly_created_triangulation.connect([&]
 	    (typename parallel::distributed::Triangulation<dim,spacedim> &tria) {
-	tria.save(serial_coarse_tria_file_name.c_str());
+	Triangulation<dim,spacedim> serial_tria;
+	serial_tria.copy_triangulation(tria);
+	std::ofstream file_stream(serial_coarse_tria_file_name, std::ios::out);
+	if (!file_stream.good()) {
+	    throw std::runtime_error("Error while opening the file: " + serial_coarse_tria_file_name);
+	}
+	boost::archive::text_oarchive output_archive(file_stream);
+	output_archive << serial_tria;
     });
         
 
     // Connect to signal to serialize data before returning from pi-DoMUS.
-    signals.use_solution_before_return.connect([&](parallel::distributed::Triangulation<dim,spacedim> &tria,
+    signals.use_solution_before_return.connect([&](const MPI_Comm &comm,
+				  	           parallel::distributed::Triangulation<dim,spacedim> &tria,
 						   DoFHandler<dim,spacedim> &dof_handler,
                                                    typename LAC::VectorType &solution,
                                                    typename LAC::VectorType &solution_dot) {
 	std::cout << "Connected to signals.serialize_before_return" << std::endl;
-	parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType> sol_trans(dof_handler);
-	sol_trans.prepare_serialization(solution);
-	tria.save("serialized_solution.txt");
-	sol_trans.prepare_serialization(solution_dot);
-	tria.save("serialized_solution_dot.txt");
+	// Following example in save method at
+	// https://github.com/ORNL-CEES/Cap/blob/master/cpp/source/deal.II/supercapacitor.templates.h#L415
+	unsigned int const n_blocks = solution.n_blocks();
+	dealii::IndexSet locally_owned_dofs = dof_handler.locally_owned_dofs();
+	dealii::IndexSet locally_relevant_dofs;
+	dealii::DoFTools::extract_locally_relevant_dofs(dof_handler,
+							locally_relevant_dofs);
+	std::vector<dealii::IndexSet> locally_owned_index_sets(n_blocks,
+							       locally_owned_dofs);
+	std::vector<dealii::IndexSet> locally_relevant_index_sets(n_blocks,
+								  locally_relevant_dofs);
+	typename LAC::VectorType ghosted_solution(locally_owned_index_sets,
+					 locally_relevant_index_sets,
+					 comm);
+	ghosted_solution = solution;
+	dealii::parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType>
+		solution_transfer(dof_handler);
+	solution_transfer.prepare_serialization(ghosted_solution);
+	tria.save(solution_file_name.c_str());
+	ghosted_solution = solution_dot;
+	solution_transfer.prepare_serialization(ghosted_solution);
+	tria.save(solution_dot_file_name.c_str());
     });
 
     // Connect to signal to modify initial conditions.
-    signals.deserialize_initial_conditions.connect([&](DoFHandler<dim,dim> &dof_handler,
-					       typename LAC::VectorType &solution,
-                                               typename LAC::VectorType &solution_dot) {
+    signals.deserialize_initial_conditions.connect([&](const MPI_Comm &comm,
+						       DoFHandler<dim,dim> &dof_handler,
+					               typename LAC::VectorType &solution,
+                                                       typename LAC::VectorType &solution_dot) {
 	std::cout << "Connected to signals.deserialize_initial_conditions" << std::endl;
 	// If a serialized solution exists, then initialize with that solution.
 	{	
-	    std::ifstream file_to_check("serialized_solution.txt");
+	    std::ifstream file_to_check("serialized_solution");
 	    if (!file_to_check.good()) {
 	        return;
 	    }
         }
 	std::cout << "Initializing from serialized solution." << std::endl;
+	// Following example in save method at
+	// https://github.com/ORNL-CEES/Cap/blob/master/cpp/source/deal.II/supercapacitor.templates.h#L415
         // Load serialized data
-	double r0 = 0.25, r1 = 0.5, l0 = 1.0, l1 = 1.25;
-        Point<3> trans;
-	trans[0] = 0;
-	trans[1] = 0;
-	trans[2] = 0;
-	parallel::distributed::Triangulation<dim,spacedim> parallel_coarse_tria(MPI_COMM_WORLD);
-        GridGenerator::hemisphere_cylinder_shell(parallel_coarse_tria, r0, r1, l0, l1, trans);
-        parallel_coarse_tria.load("serialized_solution.txt");
+	// Following instructions from Bruno Turcksin's post on the mailing list:
+	// 1) Serialize the parallel::Triangulation of the coarse mesh (already did this)
+	// 2) Do some refinements, and then use save on the parallel::Triangulation (already did this)
+	// To load the data
+	// 1) Deserialize the coarse mesh using a Triangulation (NOT a parallel:Triangulation)
+	//if (boost::filesystem::exists(serial_coarse_tria_file_name) == false) {
+	//    throw std::runtime_error("The file " + serial_coarse_tria_file_name + " does not exist.");
+	//}
+//	std::ifstream input_file_stream(serial_coarse_tria_file_name, std::ios::binary);
+	std::ifstream input_file_stream(serial_coarse_tria_file_name, std::ios::in);
+	if (!input_file_stream.good()) {
+	    throw std::runtime_error("Error while opening the file: " + serial_coarse_tria_file_name);
+	}
+//	boost::iostreams::filtering_streambuf<boost::iostreams::input> compressed_in;
+//	compressed_in.push(boost::iostreams::zlib_decompressor());
+//	compressed_in.push(input_file_stream);
+//	boost::archive::binary_iarchive input_archive(compressed_in);
+	boost::archive::text_iarchive input_archive(input_file_stream);
+        Triangulation<dim> serial_old_coarse_tria;
+	input_archive >> serial_old_coarse_tria;
+	return;
+	// 2) Use copy_triangulation to copy the Triangulation to the parallel_Triangulation
+        parallel::distributed::Triangulation<dim,spacedim> old_tria(comm);
+	old_tria.clear();
+	old_tria.copy_triangulation(serial_old_coarse_tria);
+	// 3) Use load on parallel::Triangulation to get the mesh correctly refined
+	//if (boost::filesystem::exists(solution_file_name) == false) {
+	//    throw std::runtime_error("The file " + solution_file_name + " does not exist.");
+	//}
+	old_tria.load(solution_file_name.c_str());
+	// That's the end of Bruno's instructions.
+	//
+	// Now we should be able to use the SolutionTransfer class
 	parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType> sol_trans(dof_handler);
-	sol_trans.deserialize(solution);
-        parallel_coarse_tria.load("serialized_solution_dot.txt");
-	sol_trans.deserialize(solution_dot);
+	typename LAC::VectorType old_solution, old_solution_dot;
+	sol_trans.deserialize(old_solution);
+	// Repeat for solution_dot
+	//if (boost::filesystem::exists(solution_dot_file_name) == false) {
+	//    throw std::runtime_error("The file " + solution_dot_file_name + " does not exist.");
+	//}
+	old_tria.load(solution_dot_file_name.c_str());
+	sol_trans.deserialize(old_solution_dot);
+	// Make the FE field functions	
+        //MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,typename LAC::VectorType>
+	//   solution_field(dof_handler, old_solution);
+	//MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,typename LAC::VectorType>
+	//    solution_dot_field(dof_handler, old_solution_dot);
+	// VectorTools::interpolate transformed old solution onto current FE space
+	//VectorTools::interpolate(dof_handler, solution_field, solution);
+   	//VectorTools::interpolate(dof_handler, solution_dot_field, solution_dot);
     });
 
   }
 
 private:
   mutable shared_ptr<TrilinosWrappers::PreconditionJacobi> preconditioner;
-  std::string serial_coarse_tria_file_name = "serialized_coarse_triangulation.txt";
+  std::string const serial_coarse_tria_file_name = "serialized_coarse_triangulation";
+  std::string const solution_file_name = "serialized_solution";
+  std::string const solution_dot_file_name = "serialized_solution_dot";
 };
 
 template <int dim, int spacedim, typename LAC>
