@@ -75,27 +75,27 @@ public:
 	std::cout << "Connected to signals.serialize_before_return" << std::endl;
 	// Following example in save method at
 	// https://github.com/ORNL-CEES/Cap/blob/master/cpp/source/deal.II/supercapacitor.templates.h#L415
-//	unsigned int const n_blocks = solution.n_blocks();
-//	dealii::IndexSet locally_owned_dofs = dof_handler.locally_owned_dofs();
-//	dealii::IndexSet locally_relevant_dofs;
-//	dealii::DoFTools::extract_locally_relevant_dofs(dof_handler,
-//							locally_relevant_dofs);
-//	std::vector<dealii::IndexSet> locally_owned_index_sets(n_blocks,
-//							       locally_owned_dofs);
-//	std::vector<dealii::IndexSet> locally_relevant_index_sets(n_blocks,
-//								  locally_relevant_dofs);
-//	typename LAC::VectorType ghosted_solution(locally_owned_index_sets,
-//					 locally_relevant_index_sets,
-//					 comm);
-//	ghosted_solution = solution;
+	unsigned int const n_blocks = solution.n_blocks();
+	dealii::IndexSet locally_owned_dofs = dof_handler.locally_owned_dofs();
+	dealii::IndexSet locally_relevant_dofs;
+	dealii::DoFTools::extract_locally_relevant_dofs(dof_handler,
+							locally_relevant_dofs);
+	std::vector<dealii::IndexSet> locally_owned_index_sets(n_blocks,
+							       locally_owned_dofs);
+	std::vector<dealii::IndexSet> locally_relevant_index_sets(n_blocks,
+								  locally_relevant_dofs);
+	typename LAC::VectorType ghosted_solution(locally_owned_index_sets,
+					 locally_relevant_index_sets,
+					 comm);
+	ghosted_solution = solution;
 	dealii::parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType>
 		solution_transfer(dof_handler);
-//	solution_transfer.prepare_serialization(ghosted_solution);
-	solution_transfer.prepare_serialization(solution);
+	solution_transfer.prepare_serialization(ghosted_solution);
+//	solution_transfer.prepare_serialization(solution);
 	tria.save(solution_file_name.c_str());
-//	ghosted_solution = solution_dot;
-//	solution_transfer.prepare_serialization(ghosted_solution);
-	solution_transfer.prepare_serialization(solution);
+	ghosted_solution = solution_dot;
+	solution_transfer.prepare_serialization(ghosted_solution);
+//	solution_transfer.prepare_serialization(solution);
 	tria.save(solution_dot_file_name.c_str());
 	// I think I also need to save this dof_handler for my problem.
 	std::ofstream file_stream(dof_handler_file_name, std::ios::out);
@@ -155,19 +155,32 @@ public:
 	// That's the end of Bruno's instructions.
 	//
 	// Now we should be able to use the SolutionTransfer class
+//	std::ifstream dof_input_file_stream(dof_handler_file_name, std::ios::in);
+//	if (!dof_input_file_stream.good()) {
+//	    throw std::runtime_error("Error while opening the file: " + dof_handler_file_name);
+//	}
+//	boost::archive::text_iarchive dof_input_archive(dof_input_file_stream);
+	// Maybe I have to distribute_dofs first: https://groups.google.com/forum/#!searchin/dealii/save$20DoFHandler|sort:relevance/dealii/OI73AWfrN5w/PEBrx_3FICkJ
+	// http://dealii.org/8.4.1/doxygen/deal.II/classDoFHandler.html#a553ca864aaf70330d9be86bc78f36d1e
+//	shared_ptr<DoFHandler<dim,spacedim>> old_dof_handler;
+//	old_dof_handler = SP(new DoFHandler<dim,spacedim>(old_tria));
+//	old_dof_handler->distribute_dofs(fe);
+//	dof_input_archive >> *old_dof_handler;
+	// Or maybe set up dof this way instead: https://groups.google.com/forum/#!searchin/dealii/load$20DoFHandler|sort:relevance/dealii/eWyFll9gp4k/6X-90iwRJAAJ
+	dealii::DoFHandler<dim,spacedim> old_dof_handler(old_tria);
+	old_dof_handler.distribute_dofs(fe);
 	std::ifstream dof_input_file_stream(dof_handler_file_name, std::ios::in);
 	if (!dof_input_file_stream.good()) {
 	    throw std::runtime_error("Error while opening the file: " + dof_handler_file_name);
 	}
 	boost::archive::text_iarchive dof_input_archive(dof_input_file_stream);
-	// Maybe I have to distribute_dofs first: https://groups.google.com/forum/#!searchin/dealii/save$20DoFHandler|sort:relevance/dealii/OI73AWfrN5w/PEBrx_3FICkJ
-	// http://dealii.org/8.4.1/doxygen/deal.II/classDoFHandler.html#a553ca864aaf70330d9be86bc78f36d1e
-	shared_ptr<DoFHandler<dim,spacedim>> old_dof_handler;
-	old_dof_handler = SP(new DoFHandler<dim,spacedim>(old_tria));
-	old_dof_handler->distribute_dofs(fe);
-	dof_input_archive >> *old_dof_handler;
-	parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType> sol_trans(*old_dof_handler);
-	typename LAC::VectorType old_solution, old_solution_dot;
+	dof_input_archive >> old_dof_handler;
+	dealii::parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType>
+		sol_trans(old_dof_handler);
+	//
+//	parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType> sol_trans(*old_dof_handler);
+	unsigned int ndof = old_dof_handler.n_dofs();
+	typename LAC::VectorType old_solution(ndof), old_solution_dot(ndof);
 	sol_trans.deserialize(old_solution);
 	// Repeat for solution_dot
 	//if (boost::filesystem::exists(solution_dot_file_name) == false) {
