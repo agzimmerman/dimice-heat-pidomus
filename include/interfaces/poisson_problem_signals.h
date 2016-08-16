@@ -75,30 +75,40 @@ public:
 	std::cout << "Connected to signals.serialize_before_return" << std::endl;
 	// Following example in save method at
 	// https://github.com/ORNL-CEES/Cap/blob/master/cpp/source/deal.II/supercapacitor.templates.h#L415
-	unsigned int const n_blocks = solution.n_blocks();
-	dealii::IndexSet locally_owned_dofs = dof_handler.locally_owned_dofs();
-	dealii::IndexSet locally_relevant_dofs;
-	dealii::DoFTools::extract_locally_relevant_dofs(dof_handler,
-							locally_relevant_dofs);
-	std::vector<dealii::IndexSet> locally_owned_index_sets(n_blocks,
-							       locally_owned_dofs);
-	std::vector<dealii::IndexSet> locally_relevant_index_sets(n_blocks,
-								  locally_relevant_dofs);
-	typename LAC::VectorType ghosted_solution(locally_owned_index_sets,
-					 locally_relevant_index_sets,
-					 comm);
-	ghosted_solution = solution;
+//	unsigned int const n_blocks = solution.n_blocks();
+//	dealii::IndexSet locally_owned_dofs = dof_handler.locally_owned_dofs();
+//	dealii::IndexSet locally_relevant_dofs;
+//	dealii::DoFTools::extract_locally_relevant_dofs(dof_handler,
+//							locally_relevant_dofs);
+//	std::vector<dealii::IndexSet> locally_owned_index_sets(n_blocks,
+//							       locally_owned_dofs);
+//	std::vector<dealii::IndexSet> locally_relevant_index_sets(n_blocks,
+//								  locally_relevant_dofs);
+//	typename LAC::VectorType ghosted_solution(locally_owned_index_sets,
+//					 locally_relevant_index_sets,
+//					 comm);
+//	ghosted_solution = solution;
 	dealii::parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType>
 		solution_transfer(dof_handler);
-	solution_transfer.prepare_serialization(ghosted_solution);
+//	solution_transfer.prepare_serialization(ghosted_solution);
+	solution_transfer.prepare_serialization(solution);
 	tria.save(solution_file_name.c_str());
-	ghosted_solution = solution_dot;
-	solution_transfer.prepare_serialization(ghosted_solution);
+//	ghosted_solution = solution_dot;
+//	solution_transfer.prepare_serialization(ghosted_solution);
+	solution_transfer.prepare_serialization(solution);
 	tria.save(solution_dot_file_name.c_str());
+	// I think I also need to save this dof_handler for my problem.
+	std::ofstream file_stream(dof_handler_file_name, std::ios::out);
+	if (!file_stream.good()) {
+	    throw std::runtime_error("Error while opening the file: " + dof_handler_file_name);
+	}
+	boost::archive::text_oarchive output_archive(file_stream);
+	output_archive << dof_handler;
     });
 
     // Connect to signal to modify initial conditions.
     signals.deserialize_initial_conditions.connect([&](const MPI_Comm &comm,
+						       FiniteElement<dim,dim> &fe,
 						       DoFHandler<dim,dim> &dof_handler,
 					               typename LAC::VectorType &solution,
                                                        typename LAC::VectorType &solution_dot) {
@@ -134,10 +144,8 @@ public:
 	boost::archive::text_iarchive input_archive(input_file_stream);
         Triangulation<dim> serial_old_coarse_tria;
 	input_archive >> serial_old_coarse_tria;
-	return;
 	// 2) Use copy_triangulation to copy the Triangulation to the parallel_Triangulation
         parallel::distributed::Triangulation<dim,spacedim> old_tria(comm);
-	old_tria.clear();
 	old_tria.copy_triangulation(serial_old_coarse_tria);
 	// 3) Use load on parallel::Triangulation to get the mesh correctly refined
 	//if (boost::filesystem::exists(solution_file_name) == false) {
@@ -147,7 +155,18 @@ public:
 	// That's the end of Bruno's instructions.
 	//
 	// Now we should be able to use the SolutionTransfer class
-	parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType> sol_trans(dof_handler);
+	std::ifstream dof_input_file_stream(dof_handler_file_name, std::ios::in);
+	if (!dof_input_file_stream.good()) {
+	    throw std::runtime_error("Error while opening the file: " + dof_handler_file_name);
+	}
+	boost::archive::text_iarchive dof_input_archive(dof_input_file_stream);
+	// Maybe I have to distribute_dofs first: https://groups.google.com/forum/#!searchin/dealii/save$20DoFHandler|sort:relevance/dealii/OI73AWfrN5w/PEBrx_3FICkJ
+	// http://dealii.org/8.4.1/doxygen/deal.II/classDoFHandler.html#a553ca864aaf70330d9be86bc78f36d1e
+	shared_ptr<DoFHandler<dim,spacedim>> old_dof_handler;
+	old_dof_handler = SP(new DoFHandler<dim,spacedim>(old_tria));
+	old_dof_handler->distribute_dofs(fe);
+	dof_input_archive >> *old_dof_handler;
+	parallel::distributed::SolutionTransfer<dim,typename LAC::VectorType> sol_trans(*old_dof_handler);
 	typename LAC::VectorType old_solution, old_solution_dot;
 	sol_trans.deserialize(old_solution);
 	// Repeat for solution_dot
@@ -157,13 +176,13 @@ public:
 	old_tria.load(solution_dot_file_name.c_str());
 	sol_trans.deserialize(old_solution_dot);
 	// Make the FE field functions	
-        //MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,typename LAC::VectorType>
-	//   solution_field(dof_handler, old_solution);
-	//MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,typename LAC::VectorType>
-	//    solution_dot_field(dof_handler, old_solution_dot);
-	// VectorTools::interpolate transformed old solution onto current FE space
-	//VectorTools::interpolate(dof_handler, solution_field, solution);
-   	//VectorTools::interpolate(dof_handler, solution_dot_field, solution_dot);
+//      MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,typename LAC::VectorType>
+//	   solution_field(*old_dof_handler, old_solution);
+//	MyFunctions::ExtrapolatedField<dim,DoFHandler<dim,dim>,typename LAC::VectorType>
+//	    solution_dot_field(*old_dof_handler, old_solution_dot);
+	// Interpolate transformed old solution onto current FE space
+//	VectorTools::interpolate(dof_handler, solution_field, solution);
+//   	VectorTools::interpolate(dof_handler, solution_dot_field, solution_dot);
     });
 
   }
@@ -173,6 +192,7 @@ private:
   std::string const serial_coarse_tria_file_name = "serialized_coarse_triangulation";
   std::string const solution_file_name = "serialized_solution";
   std::string const solution_dot_file_name = "serialized_solution_dot";
+  std::string const dof_handler_file_name = "dof_handler";
 };
 
 template <int dim, int spacedim, typename LAC>
